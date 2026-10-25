@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原型 2 · 灯箱 Light Table — pcull</title>
+<style>
+  /* ============ tokens: paper-light editorial ============ */
+  :root {
+    --paper: #efece6;
+    --card: #faf9f6;
+    --ink: #26251f;
+    --ink-soft: #6d6a60;
+    --hairline: #d8d4ca;
+    --red: #c4453c;
+    --green: #2e7d5b;
+    --amber: #a96f14;
+    --blue: #35679e;
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font: 14px/1.5 "Segoe UI", system-ui, "Microsoft YaHei", sans-serif;
+    padding: 34px clamp(20px, 5vw, 72px) 90px;
+  }
+  button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+  button:active { transform: scale(0.97); }
+
+  /* ============ masthead ============ */
+  .masthead { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; }
+  h1 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 30px; font-weight: 600; letter-spacing: .01em;
+  }
+  .masthead .issue {
+    color: var(--ink-soft); font-size: 13px;
+    border-top: 1px solid var(--ink); padding-top: 4px;
+  }
+  .masthead .spacer { flex: 1; }
+  .apply-btn {
+    padding: 9px 22px; border-radius: 999px;
+    border: 1.5px solid var(--ink); font-weight: 600;
+    transition: transform 160ms var(--ease-out), background 160ms ease, color 160ms ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .apply-btn:hover { background: var(--ink); color: var(--card); }
+  }
+
+  /* ============ toolbar: histogram + filters ============ */
+  .toolbar {
+    display: flex; align-items: flex-end; gap: 26px;
+    margin: 26px 0 8px; padding-bottom: 14px;
+    border-bottom: 1px solid var(--ink);
+    flex-wrap: wrap;
+  }
+  .histo { display: flex; align-items: flex-end; gap: 3px; height: 44px; }
+  .histo i {
+    width: 10px; border-radius: 2px 2px 0 0; background: var(--ink);
+    opacity: .22;
+    transition: opacity 160ms ease;
+  }
+  .histo i.hot { opacity: 1; }
+  .histo-label { color: var(--ink-soft); font-size: 11.5px; margin-left: 6px; align-self: center; }
+
+  .filters { display: flex; gap: 2px; position: relative; }
+  .filter {
+    padding: 8px 16px; border-radius: 8px; color: var(--ink-soft);
+    font-size: 13.5px;
+    transition: color 160ms ease;
+  }
+  .filter b { font-weight: 600; color: inherit; margin-left: 5px; font-variant-numeric: tabular-nums; }
+  .filter:hover { color: var(--ink); }
+  .filter.on { color: var(--card); }
+  .filter.on.red b, .filter.on.red { color: var(--card); }
+  .indicator {
+    position: absolute; bottom: 0; height: 34px; border-radius: 8px;
+    background: var(--ink); z-index: -1;
+    transition: transform 260ms var(--ease-in-out), width 260ms var(--ease-in-out);
+  }
+  .toolbar .hint { margin-left: auto; color: var(--ink-soft); font-size: 12px; align-self: center; }
+  .toolbar kbd {
+    font: 600 10.5px/1 ui-monospace, monospace;
+    border: 1px solid var(--hairline); border-radius: 4px; padding: 2px 5px; color: var(--ink-soft);
+  }
+
+  /* ============ contact sheet ============ */
+  .sheet {
+    display: grid; gap: 22px;
+    grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
+    margin-top: 22px;
+  }
+  .frame {
+    /* entrance stagger: 34ms cascade, transform+opacity only */
+    opacity: 0; transform: translateY(10px);
+    animation: frame-in 380ms var(--ease-out) forwards;
+  }
+  @keyframes frame-in { to { opacity: 1; transform: none; } }
+
+  .frame-inner { position: relative; }
+  .crop {
+    aspect-ratio: 4/3; border-radius: 6px; overflow: hidden; position: relative;
+    outline: 1px solid var(--hairline); outline-offset: -1px;
+    cursor: pointer;
+    transition: transform 200ms var(--ease-out), box-shadow 200ms var(--ease-out);
+  }
+  .crop .ph { width: 100%; height: 100%; }
+  .crop .grain {
+    position: absolute; inset: 0; opacity: .14; mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  /* duplicate stacks: physical burst groups */
+  .stack .crop { box-shadow: 3px 3px 0 -1px var(--card), 3px 3px 0 0 var(--hairline),
+                             6px 6px 0 -1px var(--card), 6px 6px 0 0 var(--hairline); }
+  .stack .tag-stack {
+    position: absolute; right: 8px; top: 8px; z-index: 2;
+    font-size: 10.5px; font-weight: 700; letter-spacing: .08em;
+    background: var(--ink); color: var(--card); border-radius: 4px; padding: 2px 7px;
+  }
+  .score-seal {
+    position: absolute; left: 8px; top: 8px; z-index: 2;
+    width: 34px; height: 34px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-weight: 800; font-size: 13px; font-variant-numeric: tabular-nums;
+    background: rgba(250,249,246,.9); backdrop-filter: blur(4px);
+    color: var(--green); outline: 1.5px solid currentColor;
+    transition: transform 140ms var(--ease-out);
+  }
+  .score-seal.mid { color: var(--amber); }
+  .score-seal.bad { color: var(--red); }
+  .verdict-seal {
+    position: absolute; right: 8px; bottom: 8px; z-index: 2;
+    font-size: 11px; font-weight: 800; letter-spacing: .1em;
+    padding: 3px 10px; border-radius: 999px; backdrop-filter: blur(4px);
+    transition: opacity 120ms ease-out, transform 120ms var(--ease-out);
+  }
+  .verdict-seal.del { color: var(--red); border: 1.5px solid var(--red); background: rgba(250,249,246,.9); }
+  .verdict-seal.keep { color: var(--green); border: 1.5px solid var(--green); background: rgba(250,249,246,.9); }
+
+  .frame:focus-visible { outline: none; }
+  .frame.sel .crop { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(38,37,31,.18); outline: 2px solid var(--blue); outline-offset: 2px; }
+  .frame:focus-visible .crop { outline: 2px solid var(--ink); outline-offset: 2px; }
+  @media (hover: hover) and (pointer: fine) {
+    .crop:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(38,37,31,.16); }
+    .crop:hover .score-seal { transform: scale(1.06); }
+  }
+
+  .caption { display: flex; align-items: baseline; gap: 8px; margin-top: 9px; }
+  .caption .fname { font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--ink-soft); }
+  .caption .fdate { margin-left: auto; font-size: 11px; color: var(--ink-soft); }
+  .marks { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
+  .mark { font-size: 10.5px; padding: 1px 8px; border-radius: 999px; border: 1px solid; }
+  .mark.bad { color: var(--red); border-color: var(--red); }
+  .mark.warn { color: var(--amber); border-color: var(--amber); }
+  .mark.info { color: var(--blue); border-color: var(--blue); }
+
+  /* ============ detail drawer (bottom, editorial) ============ */
+  .drawer {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    transform: translateY(100%);
+    transition: transform 420ms var(--ease-out);
+    background: var(--card); border-top: 1px solid var(--ink);
+    border-radius: 18px 18px 0 0;
+    padding: 22px clamp(20px, 5vw, 72px) 26px;
+    box-shadow: 0 -18px 50px rgba(38,37,31,.14);
+  }
+  .drawer.open { transform: translateY(0); }
+  .drawer-grid { display: flex; gap: 26px; align-items: flex-start; }
+  .drawer .preview {
+    width: 300px; aspect-ratio: 4/3; border-radius: 8px; flex-shrink: 0;
+    transition: opacity 200ms ease, filter 200ms ease;
+  }
+  .drawer .preview.swap { opacity: 0; filter: blur(3px); }
+  .drawer .info { flex: 1; min-width: 0; }
+  .drawer h2 { font-family: Georgia, serif; font-size: 21px; font-weight: 600; }
+  .drawer .dmeta { color: var(--ink-soft); font-size: 12.5px; margin-top: 2px; }
+  .meter { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 13px; }
+  .meter .lab { width: 40px; color: var(--ink-soft); }
+  .meter .bar { flex: 1; height: 6px; border-radius: 3px; background: var(--hairline); overflow: hidden; }
+  .meter .bar i { display: block; height: 100%; background: var(--ink); border-radius: 3px;
+                  transition: width 300ms var(--ease-out); }
+  .meter .val { width: 30px; text-align: right; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .drawer .row-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .pill {
+    padding: 9px 22px; border-radius: 999px; font-weight: 600;
+    border: 1.5px solid var(--ink);
+    transition: transform 160ms var(--ease-out), background 160ms ease, color 160ms ease;
+  }
+  .pill.danger { border-color: var(--red); color: var(--red); }
+  .pill.good { border-color: var(--green); color: var(--green); }
+  @media (hover: hover) and (pointer: fine) {
+    .pill:hover { background: var(--ink); color: var(--card); }
+    .pill.danger:hover { background: var(--red); color: var(--card); }
+    .pill.good:hover { background: var(--green); color: var(--card); }
+  }
+  .drawer .close-hint { color: var(--ink-soft); font-size: 12px; margin-left: auto; align-self: center; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .frame { animation: frame-in 120ms ease forwards; }
+    .crop, .drawer, .indicator { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <h1>接触印片 · Contact Sheet</h1>
+  <div class="issue">demo-lib · 2024 年 6 月 · 50 张</div>
+  <div class="spacer"></div>
+  <button class="apply-btn" id="apply">执行删除 · 3 张 ≈ 42 MB</button>
+</header>
+
+<div class="toolbar">
+  <div class="histo" id="histo"></div>
+  <span class="histo-label">分数分布</span>
+  <nav class="filters" id="filters">
+    <i class="indicator" id="indicator"></i>
+    <button class="filter on" data-f="all">全部 <b>24</b></button>
+    <button class="filter" data-f="delete">建议删除 <b>6</b></button>
+    <button class="filter" data-f="review">待复核 <b>2</b></button>
+    <button class="filter" data-f="stack">叠片组 <b>5</b></button>
+  </nav>
+  <div class="hint"><kbd>J</kbd><kbd>K</kbd> 移动 · <kbd>X</kbd> 删除 · <kbd>A</kbd> 保留 · <kbd>Enter</kbd> 详情</div>
+</div>
+
+<main class="sheet" id="sheet"></main>
+
+<section class="drawer" id="drawer">
+  <div class="drawer-grid">
+    <div class="preview" id="d-preview"></div>
+    <div class="info">
+      <h2 id="d-name"></h2>
+      <div class="dmeta" id="d-meta"></div>
+      <div style="margin-top:14px">
+        <div class="meter"><span class="lab">清晰</span><div class="bar"><i id="d-blur"></i></div><span class="val" id="d-blur-v"></span></div>
+        <div class="meter"><span class="lab">曝光</span><div class="bar"><i id="d-expo"></i></div><span class="val" id="d-expo-v"></span></div>
+        <div class="meter"><span class="lab">色彩</span><div class="bar"><i id="d-col"></i></div><span class="val" id="d-col-v"></span></div>
+        <div class="meter"><span class="lab">综合</span><div class="bar"><i id="d-score"></i></div><span class="val" id="d-score-v"></span></div>
+      </div>
+      <div class="row-actions">
+        <button class="pill danger">删除</button>
+        <button class="pill good">保留</button>
+        <button class="pill">打开原图</button>
+        <span class="close-hint">Esc 关闭</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+"use strict";
+function rng(seed) { let s = seed; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
+const R = rng(7);
+const PALETTES = [
+  ["#2b3a55","#8ea8c3","#e3edf7"], ["#3d2b1f","#a9744e","#f0d9b5"],
+  ["#1f3d2b","#5f8a4e","#d7e8c9"], ["#402038","#8a4e74","#ecc9e0"],
+  ["#203040","#3e6d8e","#b3d6ea"], ["#4a3512","#b98a2f","#f2e2b6"],
+];
+const SETS = [
+  { reasons: [], score: () => 78 + R() * 20 },
+  { reasons: [["模糊","bad"]], score: () => 34 + R() * 12 },
+  { reasons: [["严重模糊","bad"],["过暗","bad"]], score: () => 10 + R() * 14 },
+  { reasons: [["欠锐","warn"],["画面平淡","warn"]], score: () => 56 + R() * 10 },
+  { reasons: [["近似重复","info"]], score: () => 58 + R() * 12 },
+];
+const photos = Array.from({length: 24}, (_, i) => {
+  const pal = PALETTES[i % PALETTES.length];
+  const set = SETS[(i * 3 + 1) % SETS.length];
+  return {
+    id: i,
+    name: `IMG_${4200 + i * 13}.jpg`,
+    date: `06-${String(2 + i % 26).padStart(2, "0")}`,
+    grad: `linear-gradient(${100 + i * 31}deg, ${pal[0]}, ${pal[1]} 52%, ${pal[2]})`,
+    reasons: set.reasons,
+    score: Math.round(set.score()),
+    stack: (i >= 4 && i <= 6) ? 1 : (i === 11 || i === 12) ? 2 : 0,
+    verdict: null,
+    blur: 40 + Math.round(R() * 55), expo: 60 + Math.round(R() * 40), col: 30 + Math.round(R() * 60),
+  };
+});
+
+const $ = (id) => document.getElementById(id);
+let focusIdx = -1;
+
+function frameEl(p, idx) {
+  const f = document.createElement("div");
+  f.className = "frame" + (p.stack ? " stack" : "");
+  f.tabIndex = 0;
+  f.dataset.idx = idx;
+  f.style.animationDelay = Math.min(idx * 34, 600) + "ms";
+
+  const inner = document.createElement("div");
+  inner.className = "frame-inner";
+  const crop = document.createElement("div");
+  crop.className = "crop";
+  crop.innerHTML = `<div class="ph" style="background:${p.grad}"></div><div class="grain"></div>`;
+  const seal = document.createElement("div");
+  seal.className = "score-seal " + (p.score < 30 ? "bad" : p.score < 55 ? "mid" : "");
+  seal.textContent = p.score;
+  crop.appendChild(seal);
+  if (p.stack) {
+    const st = document.createElement("span");
+    st.className = "tag-stack"; st.textContent = "×3 叠片";
+    crop.appendChild(st);
+  }
+  crop.onclick = (e) => {
+    if (e.ctrlKey || e.metaKey || e.shiftKey) { f.classList.toggle("sel"); }
+    else { document.querySelectorAll(".frame.sel").forEach(x => x.classList.remove("sel")); openDrawer(p); }
+  };
+  inner.appendChild(crop);
+
+  const caption = document.createElement("div");
+  caption.className = "caption";
+  caption.innerHTML = `<span class="fname">${p.name}</span><span class="fdate">${p.date}</span>`;
+  inner.appendChild(caption);
+
+  if (p.reasons.length) {
+    const marks = document.createElement("div");
+    marks.className = "marks";
+    for (const [label, cls] of p.reasons) {
+      const m = document.createElement("span");
+      m.className = "mark " + cls; m.textContent = label;
+      marks.appendChild(m);
+    }
+    inner.appendChild(marks);
+  }
+  f.appendChild(inner);
+  return f;
+}
+
+function verdictSeal(f, p) {
+  f.querySelector(".crop .verdict-seal")?.remove();
+  if (!p.verdict) return;
+  const v = document.createElement("span");
+  v.className = "verdict-seal " + (p.verdict === "delete" ? "del" : "keep");
+  v.textContent = p.verdict === "delete" ? "删" : "留";
+  f.querySelector(".crop").appendChild(v);
+}
+
+function render() {
+  const sheet = $("sheet");
+  sheet.innerHTML = "";
+  photos.forEach((p, i) => { const f = frameEl(p, i); sheet.appendChild(f); verdictSeal(f, p); });
+
+  const histo = $("histo");
+  histo.innerHTML = "";
+  const buckets = new Array(10).fill(0);
+  photos.forEach(p => buckets[Math.min(9, Math.floor(p.score / 10))]++);
+  const max = Math.max(...buckets);
+  buckets.forEach((n, i) => {
+    const bar = document.createElement("i");
+    bar.style.height = Math.max(4, (n / max) * 44) + "px";
+    if (i < 3) bar.className = "hot";
+    histo.appendChild(bar);
+  });
+}
+
+/* filter indicator slides to the active tab */
+const filters = $("filters"), indicator = $("indicator");
+function moveIndicator(btn) {
+  indicator.style.width = btn.offsetWidth + "px";
+  indicator.style.transform = `translateX(${btn.offsetLeft}px)`;
+}
+filters.addEventListener("click", (e) => {
+  const btn = e.target.closest(".filter");
+  if (!btn) return;
+  filters.querySelectorAll(".filter").forEach(b => b.classList.remove("on"));
+  btn.classList.add("on");
+  moveIndicator(btn);
+});
+
+/* drawer */
+function openDrawer(p) {
+  const prev = $("d-preview");
+  prev.classList.add("swap");
+  setTimeout(() => {
+    prev.style.background = p.grad;
+    prev.classList.remove("swap");
+  }, 180);
+  $("d-name").textContent = p.name + " — 接触印片 #" + (p.id + 1);
+  $("d-meta").textContent = `${p.date} · ${p.reasons.map(r => r[0]).join(" · ") || "无瑕疵标记"}`;
+  $("d-blur").style.width = p.blur + "%"; $("d-blur-v").textContent = p.blur;
+  $("d-expo").style.width = p.expo + "%"; $("d-expo-v").textContent = p.expo;
+  $("d-col").style.width = p.col + "%"; $("d-col-v").textContent = p.col;
+  $("d-score").style.width = p.score + "%"; $("d-score-v").textContent = p.score;
+  $("drawer").classList.add("open");
+}
+function closeDrawer() { $("drawer").classList.remove("open"); }
+
+/* keyboard: no animation attached — instant focus movement */
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") return closeDrawer();
+  if (e.target.tagName === "INPUT") return;
+  const frames = [...document.querySelectorAll(".frame")];
+  const k = e.key.toLowerCase();
+  if (k === "j" || k === "arrowdown") { focusIdx = Math.min(frames.length - 1, focusIdx + 1); frames[focusIdx]?.focus(); }
+  else if (k === "k" || k === "arrowup") { focusIdx = Math.max(0, focusIdx - 1); frames[focusIdx]?.focus(); }
+  else if ((k === "x" || k === "a") && focusIdx >= 0) {
+    const p = photos[focusIdx];
+    p.verdict = k === "x" ? "delete" : "keep";
+    verdictSeal(frames[focusIdx], p);
+  } else if (e.key === "Enter" && focusIdx >= 0) openDrawer(photos[focusIdx]);
+});
+
+render();
+requestAnimationFrame(() => moveIndicator(filters.querySelector(".filter.on")));
+window.addEventListener("resize", () => moveIndicator(filters.querySelector(".filter.on")));
+</script>
+</body>
+</html>

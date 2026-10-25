@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pcull · 照片清理工作台</title>
+<meta name="description" content="本地优先的照片清理工具：AI 打分找瑕疵（模糊/闭眼/重复），键盘流审片，安全回收站。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧹</text></svg>">
+<script defer src="https://cloud.umami.is/script.js" data-website-id="e01c9f78-4607-4e60-b01c-77c8190b12b4"></script>
+<style>
+  :root {
+    --bg: #0e1116; --panel: #171b21; --card: #1c2129; --line: #2c313b;
+    --text: #e8ecf1; --muted: #828d9a; --red: #ff5d5d; --green: #43c98f;
+    --amber: #e6a23c; --blue: #5aa2ff;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 15px/1.7 "Segoe UI", system-ui, "Microsoft YaHei", sans-serif;
+  }
+  a { color: var(--blue); text-decoration: none; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+
+  nav { display: flex; align-items: center; gap: 14px; padding: 20px 0; }
+  nav .logo { font-family: ui-monospace, Menlo, monospace; font-weight: 800; font-size: 22px; }
+  nav .tag { color: var(--muted); font-size: 13px; }
+  nav .gh { margin-left: auto; border: 1px solid var(--line); border-radius: 8px; padding: 6px 14px; color: var(--text); }
+  nav .gh:hover { border-color: var(--blue); }
+
+  header.hero { padding: 44px 0 30px; }
+  h1 { font-size: clamp(28px, 5vw, 44px); line-height: 1.25; font-weight: 800; }
+  .sub { color: var(--muted); font-size: 17px; margin: 14px 0 26px; max-width: 720px; }
+  .cta { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn { display: inline-block; padding: 11px 24px; border-radius: 10px; font-weight: 700; }
+  .btn.primary { background: #17324d; border: 1px solid #2a587f; color: #bcdcff; }
+  .btn.ghost { border: 1px solid var(--line); color: var(--text); }
+  .btn:hover { filter: brightness(1.15); }
+
+  .shots { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin: 34px 0 10px; }
+  .shots img { width: 100%; border-radius: 12px; border: 1px solid var(--line); display: block; }
+  .shots figcaption { color: var(--muted); font-size: 13px; padding-top: 8px; }
+
+  section { padding: 34px 0; border-top: 1px solid var(--line); }
+  h2 { font-size: 22px; margin-bottom: 18px; }
+  .pros { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .pro { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+  .pro .k { font-family: ui-monospace, monospace; font-weight: 800; font-size: 20px; margin-bottom: 8px; }
+  .pro p { color: var(--muted); font-size: 13.5px; }
+  .pro a { display: inline-block; margin-top: 10px; font-size: 13px; font-weight: 600; }
+  .red { color: var(--red); } .green { color: var(--green); } .amber { color: var(--amber); } .blue { color: var(--blue); }
+
+  .term { background: #0b0d10; border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px;
+          font: 13px/1.9 ui-monospace, Menlo, Consolas, monospace; color: #b9c4d0; overflow-x: auto; }
+  .term .c { color: #5c6773; } .term .h { color: #7ab5ff; }
+
+  .safe { display: flex; gap: 10px; align-items: flex-start; background: #152a20;
+          border: 1px solid #23503c; border-radius: 12px; padding: 16px 18px; margin-top: 18px; }
+  .safe b { color: var(--green); }
+  .safe span { color: #a8c4b5; font-size: 14px; }
+
+  footer { color: var(--muted); font-size: 13px; padding: 26px 0 44px; border-top: 1px solid var(--line);
+           display: flex; gap: 16px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <span class="logo">pcull</span>
+    <span class="tag">照片清理工作台</span>
+    <a class="gh" href="https://github.com/holynova/photo-culler" target="_blank" rel="noopener">GitHub ↗</a>
+  </nav>
+
+  <header class="hero">
+    <h1>手机照片太乱？<br>让打分管线先过一遍，你只做决定。</h1>
+    <p class="sub">把照片拷进电脑，pcull 自动标记<b class="red">模糊</b>、<b class="amber">过曝</b>、<b class="red">闭眼</b>、<b class="blue">近似重复</b>并给出 0–100 综合分；然后在一个键盘驱动的本地网页里分诊：<b>X</b> 删除、<b>A</b> 保留、连拍组一键选优。全程本地运行，照片不出你的电脑。</p>
+    <div class="cta">
+      <a class="btn primary" href="#prototypes">体验三个 UI 原型</a>
+      <a class="btn ghost" href="https://github.com/holynova/photo-culler" target="_blank" rel="noopener">查看源码</a>
+    </div>
+    <div class="shots">
+      <figure><img src="assets/shot-home.png" alt="启动页：选择照片库" loading="lazy"><figcaption>启动页：最近库 + 目录浏览器</figcaption></figure>
+      <figure><img src="assets/shot-grid.png" alt="待处理网格：分数与理由标签" loading="lazy"><figcaption>审片网格：综合分与瑕疵理由</figcaption></figure>
+      <figure><img src="assets/shot-drawer.png" alt="详情抽屉：指标与同组对比" loading="lazy"><figcaption>详情抽屉：指标条 + 同组连拍对比</figcaption></figure>
+    </div>
+  </header>
+
+  <section id="prototypes">
+    <h2>三个可交互 UI 原型</h2>
+    <p class="sub" style="margin-top:0">在线演示是假数据的界面原型（键盘 <b>X / A / K</b> 可用）；完整功能请按下方命令在本地运行。</p>
+    <div class="pros">
+      <div class="pro">
+        <div class="k red">01 · 快刀 Triage</div>
+        <p>全屏单张快速分诊。键盘换片零动画，按住删除键 1.6 秒填充确认——为每天几百次的节奏而生。</p>
+        <a href="prototypes/prototype-triage.html">打开原型 →</a>
+      </div>
+      <div class="pro">
+        <div class="k amber">02 · 灯箱 Light Table</div>
+        <p>亮色纸感接触印片。连拍组渲染成实体叠片，顶部分数直方图，适合按事件整段回顾。</p>
+        <a href="prototypes/prototype-light-table.html">打开原型 →</a>
+      </div>
+      <div class="pro">
+        <div class="k green">03 · 工作台 Workbench</div>
+        <p>三栏专业布局：左队列 / 中网格 / 右指标检查器 / 底部连拍胶片条，面向精审与疑难复核。</p>
+        <a href="prototypes/prototype-workbench.html">打开原型 →</a>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>本地运行</h2>
+    <div class="term">
+      <span class="c"># Python 3.12</span><br>
+      py -3.12 -m venv .venv<br>
+      .venv/Scripts/python.exe -m pip install -e .<br>
+      .venv/Scripts/pcull.exe serve &nbsp;<span class="c"># 打开 http://127.0.0.1:8787</span><br>
+      <span class="h">→ 在启动页选择你的照片文件夹，自动扫描 + 分析</span>
+    </div>
+    <div class="safe">
+      <span><b>安全设计：</b>机器只给建议，删除必须人工标记；执行时文件被移入 <b>_pcull_trash/&lt;时间戳&gt;/</b> 并生成 manifest 清单，绝不直接销毁，随时可还原。</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>它能找出什么</h2>
+    <div class="pros">
+      <div class="pro"><div class="k red">模糊</div><p>Laplacian 方差归一化打分，严重模糊 / 模糊 / 欠锐三档惩罚。</p></div>
+      <div class="pro"><div class="k amber">曝光</div><p>直方图裁剪比例检测，理由区分过暗与过曝。</p></div>
+      <div class="pro"><div class="k red">闭眼</div><p>MediaPipe 人脸 blendshapes，逐脸睁眼度与闭眼判定。</p></div>
+      <div class="pro"><div class="k blue">重复 / 连拍</div><p>phash 感知哈希聚类，组内自动保留最高分，其余可删。</p></div>
+      <div class="pro"><div class="k blue">视频</div><p>ffprobe 元信息 + 均匀抽 6 帧评分，最差帧决定清晰度。</p></div>
+      <div class="pro"><div class="k green">安全回收站</div><p>apply 只移动不删除，manifest 记录全部去向。</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>© 2026 holynova</span>
+    <a href="https://github.com/holynova/photo-culler">GitHub</a>
+    <span>MIT License</span>
+    <span>32 项 pytest · 端到端浏览器实测</span>
+  </footer>
+</div>
+</body>
+</html>

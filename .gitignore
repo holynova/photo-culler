@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# 本地测试照片库（可由 scripts/make_demo_lib.py 重新生成）
+demo-lib/
+e2e-lib/
+_pcull_trash/
+
+# Node 部署产物
+node_modules/
+.wrangler/

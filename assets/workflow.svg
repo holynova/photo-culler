@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 250" width="100%" role="img" aria-label="pcull 工作流：扫描索引、分析打分、审片标记、安全移入回收站">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5462"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="250" rx="18" fill="#0e1116"/>
+
+  <g font-family="'Segoe UI', system-ui, 'Microsoft YaHei', sans-serif">
+    <!-- node template: card 240 wide -->
+    <!-- 1 scan -->
+    <g transform="translate(40,52)">
+      <rect width="240" height="130" rx="14" fill="#171b21" stroke="#2c313b"/>
+      <text x="24" y="40" font-size="21" font-weight="700" fill="#e8ecf1">① 扫描索引</text>
+      <text x="24" y="72" font-size="16" fill="#828d9a">目录 / EXIF / 尺寸</text>
+      <text x="24" y="98" font-family="ui-monospace, Menlo, monospace" font-size="15" fill="#5aa2ff">pcull scan</text>
+    </g>
+    <line x1="288" y1="117" x2="318" y2="117" stroke="#4a5462" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+    <!-- 2 analyze -->
+    <g transform="translate(330,52)">
+      <rect width="240" height="130" rx="14" fill="#171b21" stroke="#2c313b"/>
+      <text x="24" y="40" font-size="21" font-weight="700" fill="#e8ecf1">② 分析打分</text>
+      <text x="24" y="72" font-size="16" fill="#828d9a">模糊 · 曝光 · 闭眼 · 去重</text>
+      <text x="24" y="98" font-family="ui-monospace, Menlo, monospace" font-size="15" fill="#5aa2ff">pcull analyze</text>
+    </g>
+    <line x1="578" y1="117" x2="608" y2="117" stroke="#4a5462" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+    <!-- 3 serve -->
+    <g transform="translate(620,52)">
+      <rect width="240" height="130" rx="14" fill="#171b21" stroke="#2c313b"/>
+      <text x="24" y="40" font-size="21" font-weight="700" fill="#e8ecf1">③ 键盘审片</text>
+      <text x="24" y="72" font-size="16" fill="#828d9a">X 删除 · A 保留 · 组内选优</text>
+      <text x="24" y="98" font-family="ui-monospace, Menlo, monospace" font-size="15" fill="#5aa2ff">pcull serve</text>
+    </g>
+    <line x1="868" y1="117" x2="898" y2="117" stroke="#4a5462" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+    <!-- 4 apply -->
+    <g transform="translate(910,52)">
+      <rect width="250" height="130" rx="14" fill="#152a20" stroke="#23503c"/>
+      <text x="24" y="40" font-size="21" font-weight="700" fill="#3fc98c">④ 安全回收站</text>
+      <text x="24" y="72" font-size="16" fill="#828d9a">只移动 · manifest 可恢复</text>
+      <text x="24" y="98" font-family="ui-monospace, Menlo, monospace" font-size="15" fill="#5aa2ff">pcull apply</text>
+    </g>
+
+    <text x="40" y="228" font-size="16" fill="#6b7684">
+      机器只给建议，删除必须人工标记；apply 永远把文件移入 _pcull_trash/ 并生成清单，绝不直接销毁
+    </text>
+  </g>
+</svg>

@@ -1,0 +1,10 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "photo-culler",
+  "compatibility_date": "2026-10-25",
+  "workers_dev": false,
+  "assets": { "directory": "./site" },
+  "routes": [
+    { "pattern": "photo-culler.xiaosang.cc", "custom_domain": true }
+  ]
+}

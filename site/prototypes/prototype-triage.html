@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原型 1 · 快刀 Triage — pcull</title>
+<style>
+  /* ============ tokens ============ */
+  :root {
+    --bg: #0b0d10;
+    --surface: #14171c;
+    --line: #262b33;
+    --text: #e8ecf1;
+    --muted: #7e8894;
+    --red: #ff5d5d;
+    --green: #3fc98c;
+    --amber: #e6a23c;
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 14px/1.5 "Segoe UI", system-ui, "Microsoft YaHei", sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+  button {
+    font: inherit; color: inherit; background: none; border: none; cursor: pointer;
+  }
+  button:active { transform: scale(0.97); }
+
+  /* ============ top progress ============ */
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 22px;
+    background: linear-gradient(to bottom, rgba(11,13,16,.92), transparent);
+    pointer-events: none;
+  }
+  .topbar .count { font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+  .topbar .count b { font-size: 16px; }
+  .topbar .count span { color: var(--muted); }
+  .segments { display: flex; gap: 2px; flex: 1; max-width: 420px; }
+  .segments i {
+    height: 4px; flex: 1; border-radius: 2px; background: #2e343e;
+    transition: background 160ms ease;
+  }
+  .segments i.done { background: var(--green); }
+  .topbar .lib { color: var(--muted); font-size: 12px; }
+
+  /* ============ deck ============ */
+  .deck {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    padding: 76px 24px 148px;
+  }
+  /* all cards share one grid cell -> true centering + natural stacking */
+  .card {
+    grid-area: 1 / 1;
+    width: min(72vw, 980px); aspect-ratio: 4/3;
+    max-height: 100%;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #000;
+    box-shadow: 0 24px 80px rgba(0,0,0,.55);
+  }
+  /* mouse-driven card swap: transitions; keyboard swap bypasses them via .instant */
+  .card { transition: transform 240ms var(--ease-out), opacity 240ms ease-out, filter 240ms ease-out; }
+  .card.leaving {
+    transform: translateX(-48px) scale(.96); opacity: 0; filter: blur(3px);
+    pointer-events: none;
+  }
+  .card.instant { transition: none; }
+  .card .ph { width: 100%; height: 100%; }
+  .card .grain {
+    position: absolute; inset: 0; opacity: .18; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .card .film-edge {
+    position: absolute; inset: 0; border-radius: 14px;
+    box-shadow: inset 0 0 140px rgba(0,0,0,.5);
+  }
+
+  /* verdict stamps appear on mouse actions only; keyboard actions are instant by design */
+  .stamp {
+    position: absolute; top: 18px; right: 18px; z-index: 3;
+    padding: 6px 18px; border-radius: 999px;
+    font-weight: 800; letter-spacing: .18em; font-size: 15px;
+    backdrop-filter: blur(6px);
+    transition: opacity 120ms ease-out, transform 120ms var(--ease-out);
+  }
+  .stamp.del { color: var(--red); border: 1.5px solid var(--red); background: rgba(255,93,93,.12); }
+  .stamp.keep { color: var(--green); border: 1.5px solid var(--green); background: rgba(63,201,140,.12); }
+
+  /* ============ bottom HUD ============ */
+  .hud {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+    display: flex; align-items: center; gap: 26px;
+    padding: 18px 26px 22px;
+    background: linear-gradient(to top, rgba(11,13,16,.94), transparent);
+  }
+  .dial { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+  .dial svg { transform: rotate(-90deg); }
+  .dial .track { stroke: var(--line); }
+  .dial .val {
+    stroke: var(--green); stroke-linecap: round;
+    transition: stroke-dashoffset 400ms var(--ease-out), stroke 200ms ease;
+  }
+  .dial.bad .val { stroke: var(--red); }
+  .dial.mid .val { stroke: var(--amber); }
+  .dial .num {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    font-weight: 800; font-size: 19px; font-variant-numeric: tabular-nums;
+  }
+  .hud-info { flex: 1; min-width: 0; }
+  .hud-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hud-meta { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .reasons { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
+  .chip {
+    font-size: 11.5px; padding: 2px 10px; border-radius: 999px;
+    border: 1px solid; letter-spacing: .02em;
+  }
+  .chip.bad { color: var(--red); border-color: rgba(255,93,93,.4); background: rgba(255,93,93,.08); }
+  .chip.warn { color: var(--amber); border-color: rgba(230,162,60,.4); background: rgba(230,162,60,.08); }
+  .chip.info { color: #7ab5ff; border-color: rgba(122,181,255,.4); background: rgba(122,181,255,.08); }
+
+  .group-strip { display: flex; gap: 8px; align-items: center; }
+  .group-strip .gs-title { color: var(--muted); font-size: 11.5px; writing-mode: vertical-lr; letter-spacing: .2em; }
+  .g-item {
+    width: 64px; aspect-ratio: 4/3; border-radius: 8px; overflow: hidden;
+    border: 1.5px solid transparent; position: relative;
+    transition: border-color 140ms ease-out, transform 140ms var(--ease-out);
+  }
+  .g-item .ph { width: 100%; height: 100%; }
+  .g-item.on { border-color: #7ab5ff; }
+  .g-item .best {
+    position: absolute; left: 3px; bottom: 3px; font-size: 10px;
+    color: var(--green); background: rgba(0,0,0,.65); border-radius: 4px; padding: 0 4px;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .g-item:hover { transform: translateY(-3px); border-color: #7ab5ff88; }
+  }
+
+  /* hold-to-delete: asymmetric timing — deliberate 1.6s linear fill, 180ms release */
+  .actions { display: flex; gap: 10px; flex-shrink: 0; }
+  .act {
+    position: relative; overflow: hidden;
+    min-width: 108px; padding: 13px 20px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--surface);
+    font-weight: 700; letter-spacing: .04em;
+    transition: transform 160ms var(--ease-out), border-color 160ms ease;
+  }
+  .act .fill {
+    position: absolute; inset: 0; background: var(--red);
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 180ms var(--ease-out);
+  }
+  .act.holding .fill { transition: clip-path 1.6s linear; clip-path: inset(0 0 0 0); }
+  .act > span { position: relative; z-index: 1; }
+  .act.del > span { color: #ff8585; }
+  .act.skip .fill { background: #3a424d; }
+  .act kbd {
+    position: relative; z-index: 1;
+    font: 600 10.5px/1 ui-monospace, monospace;
+    color: var(--muted); border: 1px solid var(--line); border-radius: 4px;
+    padding: 2px 5px; margin-left: 7px; vertical-align: 1px;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .act:hover { border-color: #4a5462; }
+  }
+
+  .done-note {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    text-align: center; color: var(--muted); line-height: 2;
+  }
+  .done-note b { color: var(--text); font-size: 20px; display: block; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: opacity 120ms ease; }
+    .g-item, .act { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="count"><b id="idx-now">1</b> <span>/ <span id="idx-total">24</span></span></div>
+  <div class="segments" id="segments"></div>
+  <div class="lib">demo-lib · 2024-06 · DNG 已跳过</div>
+</div>
+
+<div class="deck" id="deck"></div>
+
+<div class="hud">
+  <div class="dial" id="dial">
+    <svg width="72" height="72" viewBox="0 0 72 72">
+      <circle class="track" cx="36" cy="36" r="30" fill="none" stroke-width="5"/>
+      <circle class="val" id="dial-val" cx="36" cy="36" r="30" fill="none" stroke-width="5"
+              stroke-dasharray="188.5" stroke-dashoffset="188.5"/>
+    </svg>
+    <div class="num" id="dial-num">—</div>
+  </div>
+  <div class="hud-info">
+    <div class="hud-name" id="hud-name"></div>
+    <div class="hud-meta" id="hud-meta"></div>
+    <div class="reasons" id="reasons"></div>
+  </div>
+  <div class="group-strip" id="group-strip"></div>
+  <div class="actions">
+    <button class="act del" id="btn-del">
+      <i class="fill"></i><span>删除</span><kbd>X</kbd>
+    </button>
+    <button class="act" id="btn-keep">
+      <i class="fill" style="background:var(--green)"></i><span style="color:var(--green)">保留</span><kbd>A</kbd>
+    </button>
+    <button class="act skip" id="btn-skip">
+      <i class="fill"></i><span>跳过</span><kbd>K</kbd>
+    </button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* seeded fake library so the prototype is self-contained */
+function rng(seed) { let s = seed; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
+const R = rng(42);
+const PALETTES = [
+  ["#2b3a55","#8ea8c3","#e3edf7"], ["#3d2b1f","#a9744e","#f0d9b5"],
+  ["#1f3d2b","#5f8a4e","#d7e8c9"], ["#402038","#8a4e74","#ecc9e0"],
+  ["#203040","#3e6d8e","#b3d6ea"], ["#4a3512","#b98a2f","#f2e2b6"],
+  ["#3a1f1f","#9e4b3a","#f2c9b8"], ["#22333b","#4e7a72","#c2ded8"],
+];
+const REASONS = [
+  [["模糊","bad"]], [["严重模糊","bad"],["过暗","bad"]], [["闭眼","bad"]],
+  [["欠锐","warn"],["画面平淡","warn"]], [["近似重复","info"]], [["连拍组非最佳","info"]], [],
+];
+const photos = Array.from({length: 24}, (_, i) => {
+  const pal = PALETTES[i % PALETTES.length];
+  const reasons = REASONS[(i * 5 + 2) % REASONS.length];
+  const base = reasons.some(r => r[0].includes("严重")) ? 14
+             : reasons.some(r => r[0] === "模糊" || r[0] === "闭眼") ? 38
+             : reasons.length ? 62 : 78 + Math.floor(R() * 20);
+  return {
+    id: i, name: `DJI_0${1000 + i * 7}.ARW`,
+    meta: `2024-06-${String(2 + i % 26).padStart(2, "0")} · ${(2 + R() * 18).toFixed(1)} MB · f/2.8 1/250s`,
+    grad: `linear-gradient(${120 + i * 23}deg, ${pal[0]}, ${pal[1]} 55%, ${pal[2]})`,
+    score: base, reasons,
+    group: i === 4 ? [4, 5, 6] : i === 5 || i === 6 ? [4, 5, 6]
+         : i === 11 ? [11, 12] : i === 12 ? [11, 12] : null,
+    verdict: null,
+  };
+});
+
+const $ = (id) => document.getElementById(id);
+const deck = $("deck");
+const CIRC = 188.5;
+
+function renderCard(p) {
+  const el = document.createElement("div");
+  el.className = "card instant";
+  el.innerHTML = `
+    <div class="ph" style="background:${p.grad}"></div>
+    <div class="grain"></div><div class="film-edge"></div>`;
+  if (p.verdict) {
+    const s = document.createElement("div");
+    s.className = "stamp " + (p.verdict === "delete" ? "del" : "keep");
+    s.textContent = p.verdict === "delete" ? "删 除" : "保 留";
+    el.appendChild(s);
+  }
+  return el;
+}
+
+function renderHud(p) {
+  $("hud-name").textContent = p.name;
+  $("hud-meta").textContent = p.meta;
+  const dial = $("dial");
+  dial.className = "dial " + (p.score < 30 ? "bad" : p.score < 55 ? "mid" : "");
+  $("dial-val").style.strokeDashoffset = CIRC * (1 - p.score / 100);
+  $("dial-num").textContent = p.score;
+
+  const reasons = $("reasons");
+  reasons.innerHTML = "";
+  for (const [label, cls] of p.reasons) {
+    const chip = document.createElement("span");
+    chip.className = "chip " + cls;
+    chip.textContent = label;
+    reasons.appendChild(chip);
+  }
+  if (!p.reasons.length) {
+    const chip = document.createElement("span");
+    chip.className = "chip info";
+    chip.style.color = "var(--muted)"; chip.style.borderColor = "var(--line)";
+    chip.style.background = "transparent";
+    chip.textContent = "无瑕疵标记";
+    reasons.appendChild(chip);
+  }
+
+  const strip = $("group-strip");
+  strip.innerHTML = "";
+  if (p.group) {
+    const t = document.createElement("div");
+    t.className = "gs-title"; t.textContent = "同组";
+    strip.appendChild(t);
+    const best = Math.max(...p.group.map(i => photos[i].score));
+    for (const gi of p.group) {
+      const it = document.createElement("div");
+      it.className = "g-item" + (gi === p.id ? " on" : "");
+      it.innerHTML = `<div class="ph" style="background:${photos[gi].grad}"></div>` +
+        (gi === p.group.find(x => photos[x].score === best) ? `<span class="best">★</span>` : "");
+      it.onclick = () => goto(gi);
+      strip.appendChild(it);
+    }
+  }
+}
+
+function renderSegments() {
+  const seg = $("segments");
+  seg.innerHTML = "";
+  photos.forEach(p => {
+    const i = document.createElement("i");
+    i.className = p.verdict ? "done" : "";
+    seg.appendChild(i);
+  });
+}
+
+let cur = 0;
+
+function show(i, {animate} = {animate: false}) {
+  cur = i;
+  const p = photos[i];
+  deck.innerHTML = "";
+  const el = renderCard(p);
+  deck.appendChild(el);
+  if (animate) {
+    // mouse-driven entry only; keyboard swaps stay instant
+    el.classList.remove("instant");
+    el.animate(
+      [{ opacity: 0, transform: "translateX(40px) scale(.97)", filter: "blur(2px)" },
+       { opacity: 1, transform: "none", filter: "none" }],
+      { duration: 240, easing: "cubic-bezier(0.23, 1, 0.32, 1)" }
+    );
+  }
+  renderHud(p);
+  $("idx-now").textContent = i + 1;
+  renderSegments();
+}
+
+function advance() {
+  const next = photos.findIndex((p, idx) => idx > cur && !p.verdict);
+  if (next === -1) {
+    deck.innerHTML = `<div class="done-note"><div>
+      <b>本组完成</b>24 张中标记删除 ${photos.filter(p => p.verdict === "delete").length} 张 ·
+      保留 ${photos.filter(p => p.verdict === "keep").length} 张</div></div>`;
+    $("hud-name").textContent = "按 R 重新开始预览";
+    return;
+  }
+  show(next);
+}
+
+function decide(v) {
+  photos[cur].verdict = v;
+  advance();
+}
+
+/* keyboard = 100+/day actions: no animation, ever */
+document.addEventListener("keydown", (e) => {
+  const k = e.key.toLowerCase();
+  if (k === "x") decide("delete");
+  else if (k === "a") decide("keep");
+  else if (k === "k" || k === "arrowright") advance();
+  else if (k === "arrowleft") show(Math.max(0, cur - 1));
+  else if (k === "r") { photos.forEach(p => p.verdict = null); show(0); }
+});
+
+/* mouse affordances carry the animation budget */
+function goto(i) { show(i, {animate: true}); }
+
+function holdable(btn, onDone) {
+  let timer = null;
+  const start = () => {
+    btn.classList.add("holding");
+    timer = setTimeout(() => { btn.classList.remove("holding"); onDone(); }, 1600);
+  };
+  const cancel = () => { clearTimeout(timer); btn.classList.remove("holding"); };
+  btn.addEventListener("pointerdown", start);
+  btn.addEventListener("pointerup", cancel);
+  btn.addEventListener("pointerleave", cancel);
+  btn.addEventListener("pointercancel", cancel);
+}
+holdable($("btn-del"), () => decide("delete"));
+holdable($("btn-keep"), () => decide("keep"));
+$("btn-skip").onclick = () => advance();
+
+$("idx-total").textContent = photos.length;
+show(0);
+</script>
+</body>
+</html>

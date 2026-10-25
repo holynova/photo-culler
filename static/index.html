@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pcull · 照片清理工作台</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧹</text></svg>">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div id="progress-bar" class="hidden"></div>
+
+<header>
+  <div class="brand">pcull <span class="sub" id="lib-name">照片清理工作台</span></div>
+  <div id="stats" class="stats"></div>
+  <div class="actions">
+    <button id="btn-switch" class="ghost" title="切换到其他照片库">📁 照片库</button>
+    <button id="btn-analyze" class="ghost">分析</button>
+    <button id="btn-apply" class="danger" title="把标记为删除的文件移入回收站目录（不直接删除）">执行删除…</button>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="todo" class="active">待处理</button>
+  <button data-tab="delete">建议删除</button>
+  <button data-tab="review">待复核</button>
+  <button data-tab="keep">推荐保留</button>
+  <button data-tab="decided_delete">已标记删除</button>
+  <button data-tab="decided_keep">已标记保留</button>
+  <button data-tab="groups">重复 / 连拍组</button>
+  <button data-tab="videos">视频</button>
+  <button data-tab="all">全部</button>
+</nav>
+
+<div class="toolbar">
+  <label>排序
+    <select id="sort">
+      <option value="score_desc">分数 ↑差优先</option>
+      <option value="score_asc">分数 ↓好优先</option>
+      <option value="blur_asc">模糊度</option>
+      <option value="date_desc">拍摄时间 新→旧</option>
+      <option value="date_asc">拍摄时间 旧→新</option>
+      <option value="size_desc">文件大小</option>
+    </select>
+  </label>
+  <div class="selection-info" id="selection-info"></div>
+  <div class="bulk">
+    <button id="bulk-delete" class="danger sm">标记删除 (X)</button>
+    <button id="bulk-keep" class="good sm">标记保留 (A)</button>
+    <button id="bulk-clear" class="ghost sm">清除标记 (U)</button>
+  </div>
+  <div class="hint">单击选中 · Ctrl+点击多选 · Shift+点击范围 · J/K 移动 · X/A/U 标记 · Enter 查看</div>
+</div>
+
+<main id="main"></main>
+<div id="load-more-wrap" class="hidden"><button id="load-more" class="ghost">加载更多</button></div>
+
+<aside id="drawer" class="hidden">
+  <div class="drawer-inner">
+    <button id="drawer-close" class="ghost sm">关闭 (Esc)</button>
+    <div class="drawer-body">
+      <div class="drawer-img"><img id="drawer-img" alt=""></div>
+      <div class="drawer-side">
+        <div id="drawer-title" class="drawer-title"></div>
+        <div id="drawer-chips" class="chips"></div>
+        <div id="drawer-metrics" class="metrics"></div>
+        <div class="drawer-actions">
+          <button id="drawer-delete" class="danger">标记删除</button>
+          <button id="drawer-keep" class="good">标记保留</button>
+          <button id="drawer-clear" class="ghost">清除</button>
+          <a id="drawer-original" href="#" target="_blank" class="ghost btn">查看原图</a>
+        </div>
+        <div id="drawer-group" class="drawer-group"></div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<section id="home" class="hidden">
+  <div class="home-panel">
+    <div class="home-brand">pcull</div>
+    <div class="home-sub">选择一个照片库开始清理 · 删除永远走回收站，不会直接销毁文件</div>
+
+    <div id="home-progress" class="home-progress hidden">
+      <div class="home-progress-title" id="home-progress-title">准备中…</div>
+      <div class="m-bar"><div class="m-fill" id="home-progress-fill" style="width:0%"></div></div>
+      <div class="home-progress-last" id="home-progress-last"></div>
+    </div>
+
+    <div id="home-recents-wrap">
+      <div class="home-label">最近打开</div>
+      <div id="home-recents"></div>
+    </div>
+
+    <div class="home-label">打开新文件夹</div>
+    <div class="home-pick">
+      <button id="btn-browse" class="good">浏览文件夹…</button>
+      <span class="home-or">或输入路径</span>
+      <input id="home-path" type="text" placeholder="D:\phone-pics" spellcheck="false">
+      <button id="btn-open-path" class="ghost">打开</button>
+    </div>
+  </div>
+</section>
+
+<div id="browser" class="hidden">
+  <div class="browser-inner">
+    <div class="browser-head">
+      <b>选择照片库文件夹</b>
+      <button id="browser-close" class="ghost sm">取消 (Esc)</button>
+    </div>
+    <input id="browser-path" class="browser-crumbs" type="text" spellcheck="false">
+    <div id="browser-list" class="browser-list"></div>
+    <div class="browser-foot">
+      <button id="browser-up" class="ghost sm">⬆ 上一级</button>
+      <button id="browser-select" class="good">选择此文件夹</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="hidden"></div>
+<script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pcull · UI 原型对比</title>
+<style>
+  :root {
+    --bg: #101317; --card: #171b21; --line: #2a313c;
+    --text: #dfe5ec; --muted: #8b96a5;
+    --green: #43c78f; --red: #ff5c5c; --amber: #e8a33d; --blue: #5aa2ff;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 15px/1.6 "Segoe UI", system-ui, "Microsoft YaHei", sans-serif;
+    padding: 48px clamp(20px, 6vw, 80px);
+    max-width: 1100px; margin: 0 auto;
+  }
+  h1 { font-size: 26px; margin-bottom: 6px; }
+  .sub { color: var(--muted); margin-bottom: 36px; }
+  .cards { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  a.proto {
+    display: block; text-decoration: none; color: inherit;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 22px; transition: transform 180ms cubic-bezier(0.23,1,0.32,1), border-color 180ms ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    a.proto:hover { transform: translateY(-4px); border-color: var(--blue); }
+  }
+  a.proto:active { transform: scale(0.98); }
+  .proto .no { font-size: 12px; color: var(--muted); letter-spacing: .16em; }
+  .proto h2 { margin: 6px 0 4px; font-size: 19px; }
+  .proto .tag { font-size: 12px; margin-bottom: 12px; }
+  .proto p { color: var(--muted); font-size: 13.5px; }
+  .proto ul { color: var(--muted); font-size: 13px; margin: 10px 0 0 18px; }
+  .k { color: var(--blue); } .r { color: var(--red); } .g { color: var(--green); } .a { color: var(--amber); }
+  .foot { color: var(--muted); font-size: 12.5px; margin-top: 36px; border-top: 1px solid var(--line); padding-top: 16px; }
+</style>
+</head>
+<body>
+<h1>photo-culler · UI 原型</h1>
+<div class="sub">三个方向，均为自包含 HTML（假数据可直接交互）——键盘 <b>X 删除 / A 保留 / K 跳过(或左右)</b> 通用</div>
+
+<div class="cards">
+  <a class="proto" href="prototype-triage.html">
+    <div class="no">原型 01</div>
+    <h2>快刀 · Triage</h2>
+    <div class="tag k">全屏单张 · 键盘流 · 零装饰</div>
+    <p>把审片变成纯节奏动作：一张接一张，看 HUD 打分即决。键盘动作<span class="r">零动画</span>（百次/日的操作不配动画），按住删除键 1.6s 有 clip-path 填充确认。</p>
+    <ul><li>适合：大批量快速分诊</li><li>交互：X / A / K + 按住确认</li></ul>
+  </a>
+  <a class="proto" href="prototype-light-table.html">
+    <div class="no">原型 02</div>
+    <h2>灯箱 · Light Table</h2>
+    <div class="tag a">亮色纸感 · 接触印片 · 编辑风</div>
+    <p>像翻一版印刷样张：连拍组是<span class="a">实体叠片</span>、顶部分数直方图、筛选指示条滑动。入场 34ms 阶梯 stagger，衬线标题的编辑气质。</p>
+    <ul><li>适合：按时间/事件回顾整段</li><li>交互：J/K 移动 · X/A 标记 · Enter 抽屉</li></ul>
+  </a>
+  <a class="proto" href="prototype-workbench.html">
+    <div class="no">原型 03</div>
+    <h2>工作台 · Workbench</h2>
+    <div class="tag g">三栏专业布局 · 检查器 · 常驻信息</div>
+    <p>左队列/中网格/右检查器/底部连拍胶片条。所有指标常驻可见，度量条 280ms ease-out 过渡，选片即驱动检查器——面向<span class="g">精审</span>而非快筛。</p>
+    <ul><li>适合：复核疑难照片、连拍精挑</li><li>交互：点击/J/K 选片 · X/A 决断</li></ul>
+  </a>
+</div>
+
+<div class="foot">共用设计规则：自定义 ease-out 曲线 cubic-bezier(0.23,1,0.32,1) · 键盘动作不动画 · :active scale(0.97) · hover 限定 (hover:hover) · prefers-reduced-motion 降级 · 仅过渡 transform/opacity</div>
+</body>
+</html>

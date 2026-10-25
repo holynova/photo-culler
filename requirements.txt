@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+pillow
+pillow-heif
+opencv-python-headless
+imagehash
+mediapipe
+# dev/test
+pytest
+httpx
+
+# 可选：神经美学评分（重，默认不装）
+# pip install .[neural]  -> torch + pyiqa

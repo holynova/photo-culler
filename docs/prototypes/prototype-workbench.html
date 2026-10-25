@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原型 3 · 工作台 Workbench — pcull</title>
+<style>
+  /* ============ tokens: neutral pro-tool ============ */
+  :root {
+    --bg: #16181d;
+    --rail: #1b1e24;
+    --panel: #1f232b;
+    --grid-bg: #181b20;
+    --line: #2c313b;
+    --line-soft: #242933;
+    --text: #dde3ea;
+    --muted: #828d9a;
+    --accent: #6ea8fe;
+    --red: #ff5d5d;
+    --green: #3fc98c;
+    --amber: #e6a23c;
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 13.5px/1.5 "Segoe UI", system-ui, "Microsoft YaHei", sans-serif;
+    overflow: hidden;
+  }
+  button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+  button:active { transform: scale(0.97); }
+
+  .app { display: grid; height: 100vh; grid-template-columns: 232px 1fr 340px; }
+
+  /* ============ left rail ============ */
+  .rail {
+    background: var(--rail); border-right: 1px solid var(--line-soft);
+    padding: 18px 12px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .rail .lib-switch {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; border-radius: 10px;
+    border: 1px solid var(--line); margin-bottom: 14px;
+    transition: border-color 150ms ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .rail .lib-switch:hover { border-color: var(--accent); }
+  }
+  .rail .lib-switch .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+  .rail .lib-switch .lname { font-weight: 600; font-size: 13px; }
+  .rail .lib-switch .lpath { color: var(--muted); font-size: 10.5px; }
+
+  .rail-label {
+    color: var(--muted); font-size: 10.5px; letter-spacing: .14em;
+    text-transform: uppercase; margin: 12px 8px 6px;
+  }
+  .queue {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 12px; border-radius: 8px;
+    color: var(--muted);
+    border-left: 2px solid transparent;
+    transition: background 140ms ease, color 140ms ease;
+  }
+  .queue .q-ico { width: 15px; text-align: center; opacity: .8; }
+  .queue .q-count { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 12px; }
+  .queue.on { background: var(--panel); color: var(--text); border-left-color: var(--accent); }
+  .queue.on.danger { border-left-color: var(--red); }
+  .queue.on.good { border-left-color: var(--green); }
+  @media (hover: hover) and (pointer: fine) {
+    .queue:hover { background: var(--panel); color: var(--text); }
+  }
+
+  .rail .storage { margin-top: auto; padding: 12px; border-top: 1px solid var(--line-soft); }
+  .storage .bar { height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 7px; }
+  .storage .bar i { display: block; height: 100%; width: 34%; background: var(--red); border-radius: 3px; }
+  .storage .cap { color: var(--muted); font-size: 11px; }
+  .storage b { font-size: 12.5px; }
+
+  /* ============ center grid ============ */
+  .center { display: flex; flex-direction: column; min-width: 0; }
+  .center-head {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 18px; border-bottom: 1px solid var(--line-soft);
+  }
+  .center-head h1 { font-size: 15px; font-weight: 650; }
+  .center-head .sort {
+    margin-left: auto; color: var(--muted); font-size: 12px;
+    display: flex; gap: 12px; align-items: center;
+  }
+  .center-head .sort button { color: var(--muted); padding: 4px 8px; border-radius: 6px; font-size: 12px; }
+  .center-head .sort button.on { color: var(--text); background: var(--panel); }
+
+  .grid {
+    flex: 1; overflow-y: auto; padding: 16px;
+    display: grid; gap: 10px; align-content: start;
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  }
+  .cell {
+    position: relative; border-radius: 9px; overflow: hidden; cursor: pointer;
+    aspect-ratio: 4/3; background: #000;
+    outline: 2px solid transparent; outline-offset: 1px;
+    transition: outline-color 130ms ease;
+  }
+  .cell .ph { width: 100%; height: 100%; }
+  .cell::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,.55), transparent 42%);
+    opacity: 0; transition: opacity 150ms ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .cell:hover::after { opacity: 1; }
+  }
+  .cell .sc {
+    position: absolute; left: 7px; bottom: 6px; z-index: 2;
+    font-size: 11.5px; font-weight: 800; font-variant-numeric: tabular-nums;
+    opacity: 0; transition: opacity 150ms ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .cell:hover .sc { opacity: 1; }
+  }
+  .cell.sel { outline-color: var(--accent); }
+  .cell.cur { outline-color: #fff; }
+  .cell .grp-dot {
+    position: absolute; top: 7px; right: 7px; z-index: 2;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 0 2px rgba(22,24,29,.6);
+  }
+  .cell .v {
+    position: absolute; top: 6px; left: 6px; z-index: 2;
+    font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 4px;
+  }
+  .cell .v.del { color: var(--red); background: rgba(0,0,0,.65); }
+  .cell .v.keep { color: var(--green); background: rgba(0,0,0,.65); }
+
+  /* filmstrip */
+  .filmstrip {
+    display: flex; gap: 8px; padding: 10px 16px 14px;
+    border-top: 1px solid var(--line-soft); background: var(--rail);
+    min-height: 86px; align-items: center; overflow-x: auto;
+  }
+  .filmstrip .fs-label { color: var(--muted); font-size: 11px; white-space: nowrap; margin-right: 6px; }
+  .fs-item {
+    width: 92px; aspect-ratio: 4/3; border-radius: 7px; overflow: hidden;
+    flex-shrink: 0; position: relative; cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: transform 150ms var(--ease-out), border-color 130ms ease;
+  }
+  .fs-item .ph { width: 100%; height: 100%; }
+  .fs-item.cur { border-color: #fff; }
+  .fs-item .fs-sc {
+    position: absolute; right: 4px; bottom: 3px; font-size: 10px; font-weight: 700;
+    background: rgba(0,0,0,.7); border-radius: 3px; padding: 0 4px;
+  }
+  .fs-item .fs-best { color: var(--green); }
+  @media (hover: hover) and (pointer: fine) {
+    .fs-item:hover { transform: translateY(-3px); border-color: var(--accent); }
+  }
+
+  /* ============ right inspector ============ */
+  .inspector {
+    background: var(--rail); border-left: 1px solid var(--line-soft);
+    display: flex; flex-direction: column; overflow-y: auto;
+  }
+  .insp-preview {
+    margin: 14px; border-radius: 11px; overflow: hidden;
+    aspect-ratio: 4/3; position: relative; background: #000;
+  }
+  .insp-preview .ph { width: 100%; height: 100%; }
+  .insp-preview .stamp {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    font-size: 30px; font-weight: 900; letter-spacing: .3em; color: #fff;
+    background: rgba(0,0,0,.35); backdrop-filter: blur(2px);
+    opacity: 0; transition: opacity 140ms ease-out;
+  }
+  .insp-preview .stamp.show { opacity: 1; }
+  .insp-body { padding: 0 18px 18px; }
+  .insp-name { font-weight: 650; font-size: 14px; word-break: break-all; }
+  .insp-meta { color: var(--muted); font-size: 11.5px; margin: 3px 0 14px; }
+
+  .im { display: flex; align-items: center; gap: 9px; margin: 7px 0; }
+  .im .lab { width: 34px; color: var(--muted); font-size: 11.5px; }
+  .im .bar { flex: 1; height: 5px; background: var(--line); border-radius: 3px; overflow: hidden; }
+  .im .bar i {
+    display: block; height: 100%; border-radius: 3px; background: var(--accent);
+    transition: width 280ms var(--ease-out);
+  }
+  .im .bar i.low { background: var(--red); }
+  .im .val { width: 26px; text-align: right; color: var(--muted); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+
+  .insp-rows { margin-top: 14px; border-top: 1px solid var(--line-soft); }
+  .kv { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--line-soft); font-size: 12px; }
+  .kv span { color: var(--muted); }
+  .kv b { font-weight: 500; font-variant-numeric: tabular-nums; }
+
+  .insp-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .ibtn {
+    flex: 1; padding: 10px 0; border-radius: 9px; text-align: center;
+    font-weight: 650; font-size: 12.5px;
+    border: 1px solid var(--line); background: var(--panel);
+    transition: transform 150ms var(--ease-out), border-color 150ms ease;
+  }
+  .ibtn.del { color: var(--red); border-color: #5a2c31; }
+  .ibtn.keep { color: var(--green); border-color: #23503c; }
+  @media (hover: hover) and (pointer: fine) {
+    .ibtn:hover { border-color: var(--accent); }
+  }
+
+  /* command bar */
+  .cmdbar {
+    margin: 6px 14px 14px; padding: 9px 12px; border-radius: 9px;
+    border: 1px dashed var(--line); color: var(--muted); font-size: 12px;
+    display: flex; gap: 8px; align-items: center;
+  }
+  .cmdbar kbd {
+    font: 600 10.5px/1 ui-monospace, monospace;
+    border: 1px solid var(--line); border-radius: 4px; padding: 2px 5px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .im .bar i, .fs-item, .cell, .insp-preview .stamp { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="rail">
+    <button class="lib-switch">
+      <span class="dot"></span>
+      <span>
+        <div class="lname">demo-lib</div>
+        <div class="lpath">G:\…\demo-lib</div>
+      </span>
+    </button>
+
+    <div class="rail-label">队列</div>
+    <button class="queue on"><span class="q-ico">⌛</span>待处理<span class="q-count">8</span></button>
+    <button class="queue danger"><span class="q-ico">✕</span>建议删除<span class="q-count">6</span></button>
+    <button class="queue"><span class="q-ico">?</span>待复核<span class="q-count">2</span></button>
+    <button class="queue good"><span class="q-ico">✓</span>推荐保留<span class="q-count">33</span></button>
+    <button class="queue"><span class="q-ico">◫</span>叠片 / 连拍<span class="q-count">5</span></button>
+    <button class="queue"><span class="q-ico">▶</span>视频<span class="q-count">5</span></button>
+
+    <div class="rail-label">标记</div>
+    <button class="queue"><span class="q-ico">🗑</span>已标记删除<span class="q-count">3</span></button>
+    <button class="queue"><span class="q-ico">✔</span>已标记保留<span class="q-count">12</span></button>
+
+    <div class="storage">
+      <div class="cap">已标记可释放</div>
+      <b>42.6 MB / 32.6 GB 库</b>
+      <div class="bar"><i></i></div>
+    </div>
+  </aside>
+
+  <section class="center">
+    <div class="center-head">
+      <h1>待处理 · 8 张</h1>
+      <div class="sort">
+        <span>排序</span>
+        <button class="on">分数</button>
+        <button>模糊度</button>
+        <button>时间</button>
+        <button>大小</button>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="filmstrip" id="filmstrip">
+      <span class="fs-label">同组连拍 · 3 张<br>保留 ★ 最高分</span>
+    </div>
+  </section>
+
+  <aside class="inspector">
+    <div class="insp-preview">
+      <div class="ph" id="i-ph"></div>
+      <div class="stamp" id="i-stamp">删 除</div>
+    </div>
+    <div class="insp-body">
+      <div class="insp-name" id="i-name"></div>
+      <div class="insp-meta" id="i-meta"></div>
+      <div class="im"><span class="lab">清晰</span><div class="bar"><i id="i-blur"></i></div><span class="val" id="i-blur-v"></span></div>
+      <div class="im"><span class="lab">曝光</span><div class="bar"><i id="i-expo"></i></div><span class="val" id="i-expo-v"></span></div>
+      <div class="im"><span class="lab">色彩</span><div class="bar"><i id="i-col"></i></div><span class="val" id="i-col-v"></span></div>
+      <div class="im"><span class="lab">综合</span><div class="bar"><i id="i-score"></i></div><span class="val" id="i-score-v"></span></div>
+      <div class="insp-rows">
+        <div class="kv"><span>拍摄时间</span><b id="i-date"></b></div>
+        <div class="kv"><span>文件大小</span><b id="i-size"></b></div>
+        <div class="kv"><span>分辨率</span><b>4056 × 3040</b></div>
+        <div class="kv"><span>人脸 / 闭眼</span><b id="i-face"></b></div>
+      </div>
+      <div class="insp-actions">
+        <button class="ibtn del" id="i-del">删除 (X)</button>
+        <button class="ibtn keep" id="i-keep">保留 (A)</button>
+      </div>
+    </div>
+    <div class="cmdbar"><kbd>⌘K</kbd> 命令面板 · <kbd>1-7</kbd> 切队列 · <kbd>Esc</kbd> 取消选择</div>
+  </aside>
+</div>
+
+<script>
+"use strict";
+function rng(seed) { let s = seed; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
+const R = rng(19);
+const PALETTES = [
+  ["#2b3a55","#8ea8c3","#e3edf7"], ["#3d2b1f","#a9744e","#f0d9b5"],
+  ["#1f3d2b","#5f8a4e","#d7e8c9"], ["#402038","#8a4e74","#ecc9e0"],
+  ["#203040","#3e6d8e","#b3d6ea"],
+];
+const SETS = [
+  { reasons: [], score: () => 72 + R() * 25 },
+  { reasons: [["模糊"]], score: () => 30 + R() * 16 },
+  { reasons: [["严重模糊"],["过暗"]], score: () => 8 + R() * 16 },
+  { reasons: [["闭眼"]], score: () => 32 + R() * 10 },
+  { reasons: [["近似重复"]], score: () => 55 + R() * 14 },
+];
+const photos = Array.from({length: 18}, (_, i) => {
+  const pal = PALETTES[i % PALETTES.length];
+  const set = SETS[(i * 7 + 3) % SETS.length];
+  const score = Math.round(set.score());
+  return {
+    id: i, name: `P06${String(210 + i * 11).padStart(4, "0")}.JPG`,
+    date: `2024-06-${String(2 + i % 26).padStart(2, "0")} 14:${String(i * 3 % 60).padStart(2, "0")}`,
+    size: (1.8 + R() * 9).toFixed(1) + " MB",
+    grad: `linear-gradient(${140 + i * 29}deg, ${pal[0]}, ${pal[1]} 50%, ${pal[2]})`,
+    reasons: set.reasons, score,
+    blur: Math.min(96, score + Math.round(R() * 14)),
+    expo: 52 + Math.round(R() * 48),
+    col: 22 + Math.round(R() * 62),
+    faces: i % 5 === 0 ? (i % 10 === 0 ? "2 / 1 ⚠" : "1 / 0") : "0 / 0",
+    group: (i >= 3 && i <= 5) ? [3, 4, 5] : null,
+    verdict: null,
+  };
+});
+
+const $ = (id) => document.getElementById(id);
+let cur = -1;
+const selected = new Set();
+
+function cellEl(p, i) {
+  const c = document.createElement("div");
+  c.className = "cell";
+  c.dataset.idx = i;
+  c.innerHTML = `<div class="ph" style="background:${p.grad}"></div>` +
+    (p.group ? '<span class="grp-dot"></span>' : "") +
+    `<span class="sc">${p.score}</span>`;
+  if (p.verdict) c.insertAdjacentHTML("beforeend",
+    `<span class="v ${p.verdict === "delete" ? "del" : "keep"}">${p.verdict === "delete" ? "删" : "留"}</span>`);
+  c.onclick = (e) => {
+    if (e.ctrlKey || e.metaKey) { selected.has(p.id) ? selected.delete(p.id) : selected.add(p.id); c.classList.toggle("sel"); }
+    select(i);
+  };
+  return c;
+}
+
+function renderGrid() {
+  const g = $("grid");
+  g.innerHTML = "";
+  photos.forEach((p, i) => g.appendChild(cellEl(p, i)));
+  markCurrent();
+}
+
+function markCurrent() {
+  document.querySelectorAll(".cell").forEach(c => c.classList.remove("cur"));
+  const el = document.querySelector(`.cell[data-idx="${cur}"]`);
+  if (el) { el.classList.add("cur"); el.scrollIntoView({ block: "nearest" }); }
+}
+
+function select(i, updateStrip = true) {
+  cur = i;
+  const p = photos[i];
+  markCurrent();
+
+  const ph = $("i-ph");
+  ph.style.opacity = "0";
+  requestAnimationFrame(() => {
+    ph.style.background = p.grad;
+    ph.style.opacity = "1";
+  });
+  $("i-name").textContent = p.name;
+  $("i-meta").textContent = p.reasons.join(" · ") || "无瑕疵标记 · 综合分 " + p.score;
+  const setBar = (id, v) => {
+    const bar = $(id); bar.style.width = v + "%";
+    bar.className = v < 30 ? "low" : "";
+    $(id + "-v").textContent = v;
+  };
+  setBar("i-blur", p.blur); setBar("i-expo", p.expo);
+  setBar("i-col", p.col); setBar("i-score", p.score);
+  $("i-date").textContent = p.date;
+  $("i-size").textContent = p.size;
+  $("i-face").textContent = p.faces;
+
+  const stamp = $("i-stamp");
+  stamp.classList.remove("show");
+  if (p.verdict) {
+    stamp.textContent = p.verdict === "delete" ? "删 除" : "保 留";
+    stamp.style.color = p.verdict === "delete" ? "var(--red)" : "var(--green)";
+    requestAnimationFrame(() => stamp.classList.add("show"));
+  }
+
+  if (updateStrip) renderStrip(p);
+}
+
+function renderStrip(p) {
+  const fs = $("filmstrip");
+  fs.innerHTML = '<span class="fs-label">同组连拍 · 3 张<br>保留 ★ 最高分</span>';
+  const members = p.group || [p.id];
+  const best = Math.max(...members.map(i => photos[i].score));
+  for (const mi of members) {
+    const el = document.createElement("div");
+    el.className = "fs-item" + (mi === p.id ? " cur" : "");
+    el.innerHTML = `<div class="ph" style="background:${photos[mi].grad}"></div>` +
+      `<span class="fs-sc${photos[mi].score === best ? " fs-best" : ""}">${photos[mi].score}${photos[mi].score === best ? "★" : ""}</span>`;
+    el.onclick = () => select(mi);
+    fs.appendChild(el);
+  }
+  if (!p.group) {
+    const none = document.createElement("span");
+    none.className = "fs-label";
+    none.textContent = "（独立照片，无同组）";
+    fs.appendChild(none);
+  }
+}
+
+function decide(v) {
+  if (cur < 0) return;
+  const p = photos[cur];
+  p.verdict = v;
+  renderGrid();
+  select(cur, false);
+  const next = photos.findIndex((x, i) => i > cur && !x.verdict);
+  if (next >= 0) select(next);
+}
+
+document.addEventListener("keydown", (e) => {
+  const k = e.key.toLowerCase();
+  if (k === "x") decide("delete");
+  else if (k === "a") decide("keep");
+  else if (k === "j" || k === "arrowright") select(Math.min(photos.length - 1, cur + 1));
+  else if (k === "k" || k === "arrowleft") select(Math.max(0, cur - 1));
+});
+$("i-del").onclick = () => decide("delete");
+$("i-keep").onclick = () => decide("keep");
+
+renderGrid();
+select(2);
+</script>
+</body>
+</html>

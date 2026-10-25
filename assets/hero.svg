@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 380" width="100%" role="img" aria-label="pcull 照片清理工作台：本地打分、键盘分诊、安全回收站">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2b3a55"/><stop offset=".55" stop-color="#8ea8c3"/><stop offset="1" stop-color="#e3edf7"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#402038"/><stop offset=".55" stop-color="#8a4e74"/><stop offset="1" stop-color="#ecc9e0"/>
+    </linearGradient>
+    <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1f3d2b"/><stop offset=".55" stop-color="#5f8a4e"/><stop offset="1" stop-color="#d7e8c9"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="380" rx="18" fill="#0e1116"/>
+  <rect width="1200" height="4" rx="2" fill="#2c313b"/>
+  <rect x="0" y="2" width="360" height="4" rx="2" fill="#43c78f"/>
+
+  <!-- wordmark -->
+  <text x="72" y="150" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+        font-size="88" font-weight="800" fill="#e8ecf1" letter-spacing="2">pcull</text>
+  <text x="76" y="196" font-family="'Segoe UI', system-ui, 'Microsoft YaHei', sans-serif"
+        font-size="26" font-weight="600" fill="#9aa6b5">照片清理工作台 · Local Photo Culling</text>
+  <text x="76" y="236" font-family="'Segoe UI', system-ui, 'Microsoft YaHei', sans-serif"
+        font-size="20" fill="#6b7684">本地打分 · 键盘分诊 · 安全回收站</text>
+
+  <!-- keyboard hint keycaps -->
+  <g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="17" font-weight="700">
+    <rect x="76" y="268" width="40" height="36" rx="8" fill="#1c2129" stroke="#2c313b"/>
+    <text x="96" y="292" fill="#8ea8c3" text-anchor="middle">J</text>
+    <rect x="124" y="268" width="40" height="36" rx="8" fill="#2a1a1d" stroke="#5a2c31"/>
+    <text x="144" y="292" fill="#ff8585" text-anchor="middle">X</text>
+    <rect x="172" y="268" width="40" height="36" rx="8" fill="#152a20" stroke="#23503c"/>
+    <text x="192" y="292" fill="#3fc98c" text-anchor="middle">A</text>
+    <text x="232" y="292" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400"
+          font-size="16" fill="#6b7684">X 删除 · A 保留 · J 下一张</text>
+  </g>
+
+  <!-- score dial -->
+  <g transform="translate(628,196)">
+    <circle r="88" fill="none" stroke="#232933" stroke-width="12"/>
+    <path d="M 0 -88 A 88 88 0 1 1 -62.2 -62.2" fill="none" stroke="#e6a23c"
+          stroke-width="12" stroke-linecap="round"/>
+    <text y="10" font-family="ui-monospace, Menlo, monospace" font-size="40" font-weight="800"
+          fill="#e6a23c" text-anchor="middle">45</text>
+    <text y="38" font-family="'Segoe UI', system-ui, sans-serif" font-size="15"
+          fill="#828d9a" text-anchor="middle">综合分</text>
+  </g>
+
+  <!-- triage cards -->
+  <g transform="rotate(-6 902 196)">
+    <rect x="812" y="106" width="180" height="135" rx="12" fill="url(#g1)"/>
+    <circle cx="846" cy="140" r="19" fill="#0e1116" opacity=".85"/>
+    <text x="846" y="147" font-family="ui-monospace, monospace" font-size="17" font-weight="800"
+          fill="#43c78f" text-anchor="middle">88</text>
+  </g>
+  <g transform="rotate(4 1064 200)">
+    <rect x="976" y="112" width="176" height="132" rx="12" fill="url(#g3)"/>
+    <circle cx="1010" cy="146" r="19" fill="#0e1116" opacity=".85"/>
+    <text x="1010" y="153" font-family="ui-monospace, monospace" font-size="17" font-weight="800"
+          fill="#43c78f" text-anchor="middle">91</text>
+    <rect x="1048" y="204" width="86" height="26" rx="13" fill="#0e1116" opacity=".85"/>
+    <text x="1091" y="222" font-family="'Segoe UI', system-ui, sans-serif" font-size="14"
+          font-weight="700" fill="#43c98c" text-anchor="middle">✔ 保留</text>
+  </g>
+  <g transform="rotate(-2 986 240)">
+    <rect x="898" y="178" width="176" height="132" rx="12" fill="url(#g2)"/>
+    <circle cx="932" cy="212" r="19" fill="#0e1116" opacity=".85"/>
+    <text x="932" y="219" font-family="ui-monospace, monospace" font-size="17" font-weight="800"
+          fill="#ff5d5d" text-anchor="middle">12</text>
+    <rect x="970" y="270" width="86" height="26" rx="13" fill="#0e1116" opacity=".85"/>
+    <text x="1013" y="288" font-family="'Segoe UI', system-ui, sans-serif" font-size="14"
+          font-weight="700" fill="#ff5d5d" text-anchor="middle">🗑 删除</text>
+    <rect x="918" y="132" width="64" height="24" rx="6" fill="#2a2126"/>
+    <text x="950" y="149" font-family="'Segoe UI', system-ui, sans-serif" font-size="13"
+          fill="#ff8f8f" text-anchor="middle">闭眼</text>
+  </g>
+</svg>
