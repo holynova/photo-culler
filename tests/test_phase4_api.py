@@ -42,9 +42,9 @@ def test_photos_tabs_and_sort(client):
     assert deletes["total"] >= 1
     assert all(i["recommendation"] == "delete" for i in deletes["items"])
 
-    # default sort score_desc: scores descending
+    # default sort score_asc: scores ascending, worst first for culling
     scores = [i["score"] for i in all_items["items"]]
-    assert scores == sorted(scores, reverse=True)
+    assert scores == sorted(scores)
 
     r = c.get("/api/photos", params={"tab": "nope"})
     assert r.status_code == 400
@@ -76,7 +76,9 @@ def test_groups_endpoint(client):
 
 def test_thumbnail_and_file_serving(client):
     c, lib = client
-    any_item = c.get("/api/photos").json()["items"][0]
+    # explicit best-first sort: the default (worst first) starts with the
+    # corrupt file, which has no thumbnail by design
+    any_item = c.get("/api/photos", params={"sort": "score_desc"}).json()["items"][0]
     r = c.get(f"/thumb/{any_item['id']}")
     assert r.status_code == 200 and r.headers["content-type"].startswith("image/jpeg")
     assert c.get("/thumb/99999").status_code == 404

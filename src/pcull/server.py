@@ -1,6 +1,7 @@
 """FastAPI app: JSON API + static review UI."""
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 import string
@@ -16,6 +17,9 @@ from pydantic import BaseModel
 from pcull import libraries
 from pcull.apply import apply_decisions
 from pcull.db import connect
+
+# 轻量探测：只查模块是否存在，不导入、不下载模型
+_MEDIAPIPE_AVAILABLE = importlib.util.find_spec("mediapipe") is not None
 
 STATIC_DIR = Path(__file__).resolve().parents[2] / "static"
 
@@ -108,10 +112,10 @@ def create_app(library: Path | None) -> FastAPI:
         return {"photos": total, "analyzed": analyzed,
                 "recommendations": by_rec, "decided": decided,
                 "reclaimable_bytes": reclaim, "total_bytes": total_bytes,
-                "groups": groups}
+                "groups": groups, "faces_available": _MEDIAPIPE_AVAILABLE}
 
     @app.get("/api/photos")
-    def photos(tab: str = "all", sort: str = "score_desc",
+    def photos(tab: str = "all", sort: str = "score_asc",
                limit: int = 60, offset: int = 0, group_id: int | None = None):
         where = _TAB_WHERE.get(tab)
         if where is None:

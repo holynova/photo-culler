@@ -23,12 +23,25 @@
 
 ## 快速开始 / Quick start
 
+macOS / Linux：
+
+```bash
+git clone https://github.com/holynova/photo-culler && cd photo-culler
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -e . -r requirements.txt
+.venv/bin/pcull serve     # http://127.0.0.1:8787，启动页里选择照片文件夹
+```
+
+Windows（PowerShell）：
+
 ```bash
 git clone https://github.com/holynova/photo-culler && cd photo-culler
 py -3.12 -m venv .venv
-.venv/Scripts/python.exe -m pip install -e .
-.venv/Scripts/pcull.exe serve     # http://127.0.0.1:8787，启动页里选择照片文件夹
+.venv\Scripts\python.exe -m pip install -e . -r requirements.txt
+.venv\Scripts\pcull.exe serve     # http://127.0.0.1:8787，启动页里选择照片文件夹
 ```
+
+`requirements.txt` 里包含闭眼检测用的 mediapipe；只装 `-e .` 也能运行，但闭眼检测会跳过（界面统计栏会提示「闭眼检测未启用」）。首次启用闭眼检测时会自动下载约 15 MB 的 MediaPipe 模型到 `~/.pcull_models/`，需要联网。
 
 ## 检测器 / Detectors
 

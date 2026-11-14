@@ -24,7 +24,7 @@ def apply_decisions(library: Path, conn, dry_run: bool = False) -> dict:
     planned = [dict(r) for r in rows]
     if dry_run or not planned:
         total = sum(r["size"] or 0 for r in planned)
-        return {"summary": f"dry-run: {len(planned)} files, {total/1e6:.1f} MB",
+        return {"summary": f"试运行：{len(planned)} 个文件，{total/1e6:.1f} MB（未实际移动）",
                 "manifest": None, "moved": 0, "planned": planned}
 
     stamp = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -51,7 +51,7 @@ def apply_decisions(library: Path, conn, dry_run: bool = False) -> dict:
                              encoding="utf-8")
     total = sum(i["size"] or 0 for i in manifest["items"])
     return {
-        "summary": f"moved {moved} files ({total/1e6:.1f} MB) -> {trash_root}",
+        "summary": f"已移入回收站：{moved} 个文件（{total/1e6:.1f} MB）→ {trash_root}",
         "manifest": str(manifest_path),
         "moved": moved,
         "planned": planned,

@@ -3,7 +3,7 @@
 
 const state = {
   tab: "todo",
-  sort: "score_desc",
+  sort: "score_asc",
   items: [],
   selected: new Set(),
   focusIndex: -1,
@@ -69,6 +69,7 @@ async function refreshStats() {
     `已标记删除 <b>${s.decided.delete || 0}</b> · 可释放 <b>${fmtSize(s.reclaimable_bytes)}</b>`,
     `库大小 <b>${fmtSize(s.total_bytes)}</b>`,
   ];
+  if (s.faces_available === false) parts.push('<span class="amber" title="安装 mediapipe 后重新分析即可启用闭眼检测">闭眼检测未启用</span>');
   $("stats").innerHTML = parts.join('<span style="opacity:.3">·</span>');
   $("btn-apply").disabled = !(s.decided.delete > 0);
 }
@@ -149,7 +150,7 @@ function buildCard(item, idx, small = false) {
   if (item.is_video) {
     const b = document.createElement("span");
     b.className = "badge b-info";
-    b.textContent = `视频 ${item.duration ? item.duration.toFixed(0) + "s" : ""}`;
+    b.textContent = `视频 ${item.duration ? item.duration.toFixed(0) + " 秒" : ""}`;
     badges.appendChild(b);
   }
   meta.appendChild(badges);
@@ -396,7 +397,7 @@ function renderDrawer(item, groupItems) {
     const row = document.createElement("div");
     row.className = "m-row";
     row.textContent = item.faces
-      ? `人脸 ${item.faces}${item.eye_open_min != null ? " · 最睁眼度 " + item.eye_open_min : ""}${item.closed_eye ? " · ⚠ 闭眼" : ""}`
+      ? `人脸 ${item.faces}${item.eye_open_min != null ? " · 睁眼度最低 " + item.eye_open_min.toFixed(2) : ""}${item.closed_eye ? " · ⚠ 闭眼" : ""}`
       : "未检出人脸";
     m.appendChild(row);
   }
