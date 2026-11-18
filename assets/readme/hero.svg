@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1200" height="360" viewBox="0 0 1200 360"
+     role="img" aria-labelledby="title desc">
+  <title id="title">pcull · 照片清理工作台 — 本地打分、键盘分诊、安全回收站</title>
+  <desc id="desc">深色底标题：pcull 照片清理工作台；右侧是三张照片卡片的分诊示意，一张 100 分标保留，一张 42 分模糊标删除，一张 90 分标近似重复。</desc>
+
+  <rect width="1200" height="360" rx="26" fill="#10161a"/>
+
+  <g id="title-block" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <text x="56" y="62" font-size="19" letter-spacing="3" fill="#8fa8b0">本地照片清理 · LOCAL PHOTO CULLING</text>
+    <text x="56" y="128" font-size="62" font-weight="700" fill="#e8ecf0">pcull <tspan fill="#4ade80">照片清理</tspan></text>
+    <text x="56" y="168" font-size="23" fill="#e8ecf0">打分找瑕疵，键盘流审片，删错可找回</text>
+    <text x="56" y="204" font-size="19" fill="#aab8c0">模糊、闭眼、重复自动标出；删除只进回收站，永不销毁原片。</text>
+    <g id="chips" font-size="18" fill="#e8ecf0" text-anchor="middle">
+      <g><rect x="56" y="238" width="126" height="36" rx="18" fill="#1b262c" stroke="#33454f" stroke-width="1.5"/><text x="119" y="262">5 种检测</text></g>
+      <g><rect x="194" y="238" width="150" height="36" rx="18" fill="#1b262c" stroke="#33454f" stroke-width="1.5"/><text x="269" y="262">键盘流审片</text></g>
+      <g><rect x="356" y="238" width="150" height="36" rx="18" fill="#1b262c" stroke="#33454f" stroke-width="1.5"/><text x="431" y="262">安全回收站</text></g>
+      <g><rect x="518" y="238" width="126" height="36" rx="18" fill="#1b262c" stroke="#33454f" stroke-width="1.5"/><text x="581" y="262">32 项测试</text></g>
+    </g>
+  </g>
+
+  <g id="triage" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+    <text x="810" y="40" font-size="18" fill="#8fa8b0">审片分诊 · X 删除 / A 保留</text>
+    <g id="card-keep">
+      <rect x="810" y="56" width="100" height="130" rx="10" fill="#1f3a2d" stroke="#4ade80" stroke-width="2"/>
+      <rect x="818" y="64" width="84" height="66" rx="6" fill="#2e5d43"/>
+      <circle cx="848" cy="88" r="12" fill="#7ddfa4"/>
+      <circle cx="878" cy="104" r="8" fill="#4ade80"/>
+      <rect x="818" y="96" width="84" height="34" rx="4" fill="#245c38" opacity="0.7"/>
+      <text x="822" y="152" font-size="17" font-weight="700" fill="#4ade80">100 分</text>
+      <text x="822" y="174" font-size="15" fill="#c8d6dc">★ 组内最佳</text>
+      <rect x="862" y="68" width="36" height="22" rx="6" fill="#4ade80"/><text x="880" y="84" font-size="14" font-weight="700" fill="#10161a" text-anchor="middle">A</text>
+    </g>
+    <g id="card-delete">
+      <rect x="926" y="56" width="100" height="130" rx="10" fill="#3d2323" stroke="#ef4444" stroke-width="2"/>
+      <rect x="934" y="64" width="84" height="66" rx="6" fill="#5a3a3a"/>
+      <circle cx="962" cy="88" r="12" fill="#c98a8a" opacity="0.7"/>
+      <circle cx="992" cy="104" r="8" fill="#b06a6a" opacity="0.7"/>
+      <rect x="934" y="96" width="84" height="34" rx="4" fill="#4a2c2c" opacity="0.7"/>
+      <text x="938" y="152" font-size="17" font-weight="700" fill="#fca5a5">42 分</text>
+      <text x="938" y="174" font-size="15" fill="#c8d6dc">模糊 · 闭眼</text>
+      <rect x="978" y="68" width="36" height="22" rx="6" fill="#dc2626"/><text x="996" y="84" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">X</text>
+    </g>
+    <g id="card-dup">
+      <rect x="1042" y="56" width="100" height="130" rx="10" fill="#1b262c" stroke="#33454f" stroke-width="2"/>
+      <rect x="1050" y="64" width="84" height="66" rx="6" fill="#2e4a5d"/>
+      <circle cx="1080" cy="88" r="12" fill="#7db8d8"/>
+      <circle cx="1110" cy="104" r="8" fill="#5b9cc4"/>
+      <rect x="1050" y="96" width="84" height="34" rx="4" fill="#24404f" opacity="0.7"/>
+      <text x="1054" y="152" font-size="17" font-weight="700" fill="#7db8d8">90 分</text>
+      <text x="1054" y="174" font-size="15" fill="#c8d6dc">近似重复</text>
+    </g>
+    <g id="pipeline" font-size="17" fill="#c8d6dc" text-anchor="middle">
+      <text x="860" y="232">扫描</text><text x="908" y="232" fill="#8fa8b0">→</text>
+      <text x="956" y="232">分析</text><text x="1004" y="232" fill="#8fa8b0">→</text>
+      <text x="1052" y="232">审片</text><text x="1100" y="232" fill="#8fa8b0">→</text>
+      <text x="1140" y="232" fill="#4ade80">回收站</text>
+    </g>
+    <rect x="810" y="252" width="332" height="48" rx="10" fill="#1b262c" stroke="#33454f" stroke-width="1.5"/>
+    <text x="976" y="282" font-size="17" fill="#e8ecf0" text-anchor="middle">删除 = 移入 _pcull_trash + 清单</text>
+  </g>
+</svg>
